@@ -1,91 +1,18 @@
 import React, { Component} from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Platform } from 'react-native';
+import { Button,StyleSheet, StatusBar, ActivityIndicator, Text, View, TouchableOpacity, Platform } from 'react-native';
 import { GoogleSignin, GoogleSigninButton } from 'react-native-google-signin';
 import WEBCLIENT_ID from './gconfig';
+import { createStackNavigator, createSwitchNavigator } from 'react-navigation';
+import HomeScreen from './components/HomeScreen';
 
-
-export default class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      user: null,
-      error: null,
-    };
-  }
-
-  async componentDidMount() {
-    await this._configureGoogleSignIn();
-    await this._getCurrentUser();
-  }
-
-  async _configureGoogleSignIn() {
-    await GoogleSignin.hasPlayServices({ autoResolve: true });
-    const configPlatform = {
-      ...Platform.select({
-        ios: {},
-        android: {},
-      }),
-    };
-
-    await GoogleSignin.configure({
-      ...configPlatform,
-      webClientId: WEBCLIENT_ID,
-      offlineAccess: false,
-    });
-  }
-
-  async _getCurrentUser() {
-    try {
-      const user = await GoogleSignin.currentUserAsync();
-      this.setState({ user, error: null });
-    } catch (error) {
-      this.setState({
-        error,
-      });
-    }
-  }
-
-  render() {
-    const { user, error } = this.state;
-    if (!user) {
-      return (
-        <View style={styles.container}>
-          <GoogleSigninButton
-            style={{ width: 230, height: 48 }}
-            size={GoogleSigninButton.Size.Standard}
-            color={GoogleSigninButton.Color.Auto}
-            onPress={this._signIn}
-          />
-          {error && (
-            <Text>
-              {error.toString()} code: {error.code}
-            </Text>
-          )}
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.container}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>
-            Welcome {user.name}
-          </Text>
-          <Text>Your email is: {user.email}</Text>
-
-          <TouchableOpacity onPress={this._signOut}>
-            <View style={{ marginTop: 50 }}>
-              <Text>Log out</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-  }
+class SignInScreen extends React.Component {
 
   _signIn = async () => {
     try {
       const user = await GoogleSignin.signIn();
-      this.setState({ user, error: null });
+      this.props.navigation.navigate('App');
     } catch (error) {
+      console.log(error);
       if (error.code === 'CANCELED') {
         error.message = 'user canceled the login flow';
       }
@@ -106,7 +33,83 @@ export default class App extends Component {
       });
     }
   };
+
+  render() {
+    return (
+      <View style={styles.container}>
+        <GoogleSigninButton
+          style={{ width: 230, height: 48 }}
+          size={GoogleSigninButton.Size.Standard}
+          color={GoogleSigninButton.Color.Auto}
+          onPress={this._signIn}
+        />
+      </View>
+    );
+  }
 }
+
+
+class AuthLoadingScreen extends React.Component {
+  constructor(props) {
+    super(props); 
+  }
+  async componentDidMount(){
+    await this._configureGoogleSignIn();
+    await this._getCurrentUser();
+  }
+
+  async _configureGoogleSignIn() {
+    await GoogleSignin.hasPlayServices({ autoResolve: true });
+    const configPlatform = {
+      ...Platform.select({
+        ios: {},
+        android: {},
+      }),
+    };
+
+    await GoogleSignin.configure({
+      ...configPlatform,
+      webClientId: WEBCLIENT_ID,
+      offlineAccess: false,
+      scopes: ['https://www.googleapis.com/auth/youtube.readonly', 'https://www.googleapis.com/auth/youtube','https://www.googleapis.com/auth/youtube.force-ssl']
+    });
+  }
+
+  async _getCurrentUser() {
+    try {
+      const user = await GoogleSignin.currentUserAsync();
+      console.log(user);
+      this.props.navigation.navigate(user ? 'App' : 'Auth');
+    } catch (error) {
+      this.setState({
+        error,
+      });
+    }
+  }
+
+  render() {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator />
+        <StatusBar barStyle="default" />
+      </View>
+    );
+  }
+}
+
+const AppStack = createStackNavigator({ Home: HomeScreen }, { headerMode: 'none',headerTitle: 'Home'} );
+const AuthStack = createStackNavigator({ SignIn: SignInScreen},{ headerMode: 'none'});
+
+export default createSwitchNavigator(
+  {
+    AuthLoading: AuthLoadingScreen,
+    App: AppStack,
+    Auth: AuthStack,
+  },
+  {
+    initialRouteName: 'AuthLoading',
+  }
+);
 
 const styles = StyleSheet.create({
   container: {
