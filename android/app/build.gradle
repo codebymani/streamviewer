@@ -108,6 +108,14 @@ android {
         }
     }
      signingConfigs {
+        debug {
+            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
+                storeFile file(MYAPP_RELEASE_STORE_FILE)
+                storePassword MYAPP_RELEASE_STORE_PASSWORD
+                keyAlias MYAPP_RELEASE_KEY_ALIAS
+                keyPassword MYAPP_RELEASE_KEY_PASSWORD
+            }
+        }
         release {
             if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
                 storeFile file(MYAPP_RELEASE_STORE_FILE)
@@ -149,10 +157,9 @@ android {
 }
 
 dependencies {
-    compile project(':react-native-youtube')
-    compile project(':react-native-vector-icons')
-    compile project(':react-native-google-signin')
-    implementation(project(":react-native-google-signin")){         
+    implementation project(':react-native-youtube')
+    implementation project(':react-native-vector-icons')
+    implementation(project(":react-native-google-signin")){
         exclude group: "com.google.android.gms" // very important
     }
     implementation fileTree(dir: "libs", include: ["*.jar"])

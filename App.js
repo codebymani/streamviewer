@@ -1,5 +1,5 @@
 import React, { Component} from 'react';
-import { Button,StyleSheet, StatusBar, ActivityIndicator, Text, View, TouchableOpacity, Platform } from 'react-native';
+import { Button, StyleSheet, StatusBar, ActivityIndicator, Text, View, TouchableOpacity, ToastAndroid, Platform } from 'react-native';
 import { GoogleSignin, GoogleSigninButton } from 'react-native-google-signin';
 import WEBCLIENT_ID from './gconfig';
 import { createStackNavigator, createSwitchNavigator } from 'react-navigation';
@@ -16,9 +16,7 @@ class SignInScreen extends React.Component {
       if (error.code === 'CANCELED') {
         error.message = 'user canceled the login flow';
       }
-      this.setState({
-        error,
-      });
+      ToastAndroid.show(error.message, ToastAndroid.SHORT);
     }
   };
 
